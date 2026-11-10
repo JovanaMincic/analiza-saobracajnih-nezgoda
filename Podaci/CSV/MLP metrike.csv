@@ -1,0 +1,10 @@
+metrika,vrednost
+accuracy,0.5185
+f1_macro,0.3794
+precision_macro,0.443
+recall_macro,0.4601
+f1_mat,0.702
+f1_pov,0.3945
+f1_pog,0.0416
+optimalan_k_silhouette,5.0
+ulaznih_obelezja,30.0
