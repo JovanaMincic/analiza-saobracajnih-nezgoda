@@ -1,7 +1,20 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Ова скрипта се користила за истражну анализу података.
+САОБРАЋАЈНЕ НЕЗГОДЕ - Заједничка истражна анализа
+Јована Минчић и Марко Гордић
+
+Садржај:
+    0. Библиотеке
+    1. Пресловљавање латинице у ћирилицу
+    2. Учитавање и изведена временска обележја
+    3. Квалитет података
+    4. Расподела циљног обележја (тежина)
+    5. Расподела категорија незгоде
+    6. Веза између категорије и тежине незгоде
+    7. Метеоролошки услови
+    8. Временска анализа
+    9. Просторна анализа
 """
 
 # %% 0. Библиотеке
@@ -31,8 +44,7 @@ TEZINA_NAZIVI = ["Sa mat.stetom", "Sa povredjenim", "Sa poginulim"]
 
 # %% 1. Пресловљавање латинице у ћирилицу
 
-# Филтрирање и груписање остају на латиници (вредности из података), а само
-# текст који иде на графиконе пресловљавамо у ћирилицу овом функцијом.
+# Користи се само за текст на графиконима.
 DIGRAFI = {"Dž": "Џ", "DŽ": "Џ", "dž": "џ", "Lj": "Љ", "LJ": "Љ", "lj": "љ",
            "Nj": "Њ", "NJ": "Њ", "nj": "њ", "Dj": "Ђ", "DJ": "Ђ", "dj": "ђ"}
 SLOVA = {"A": "А", "B": "Б", "C": "Ц", "Č": "Ч", "Ć": "Ћ", "D": "Д", "Đ": "Ђ",
@@ -64,10 +76,9 @@ data["dan_u_nedelji"] = data["datum_vreme"].dt.dayofweek
 godisnje = {12: 0, 1: 0, 2: 0, 3: 1, 4: 1, 5: 1,
             6: 2, 7: 2, 8: 2, 9: 3, 10: 3, 11: 3}
 data["godisnje_doba"] = data["mesec"].map(godisnje)
+# 0=зима, 1=пролеће, 2=лето, 3=јесен
 
-# Ординално кодирање тежине по озбиљности исхода (0 < 1 < 2). Прави се ЈЕДНОМ
-# и користи само у нумеричким анализама (просечна тежина, Spearman, MI,
-# корелациона матрица). За све описне графиконе користимо текстуалну 'tezina'.
+# Ординално кодирање тежине (0 = мат. штета, 1 = повређени, 2 = погинули)
 data["tezina_kod"] = data["tezina"].map(TEZINA_RED)
 
 print("Облик скупа:", data.shape)
@@ -148,8 +159,6 @@ plt.show()
 
 # %% 6. Веза између категорије и тежине незгоде
 
-# Crosstab над текстуалним вредностима (колоне се сортирају абецедно:
-# [Sa mat.stetom, Sa poginulim, Sa povredjenim] -> боје [steelblue, crimson, orange]).
 tab_apsolutno = pd.crosstab(data["kategorija"], data["tezina"])
 tab_procenat = pd.crosstab(data["kategorija"], data["tezina"],
                            normalize="index") * 100
@@ -158,6 +167,7 @@ print(tab_apsolutno)
 print("\nТежина по категорији (%):")
 print(tab_procenat.round(1))
 
+# Колоне су сортиране абецедно (мат. штета, погинули, повређени)
 boje_stack = ["steelblue", "crimson", "orange"]
 tab_proc_cir = tab_procenat.rename(index=cir, columns=cir)
 
@@ -174,7 +184,7 @@ plt.savefig("Podaci/Grafici/EDA - težina po kategoriji (procentualno).png",
             dpi=120, bbox_inches="tight")
 plt.show()
 
-# Просечна тежина по категорији (користи ординални tezina_kod)
+# Просечна тежина по категорији
 prosek_kat = data.groupby("kategorija")["tezina_kod"].mean().sort_values()
 prosek_kat_cir = prosek_kat.rename(index=cir)
 
@@ -217,7 +227,7 @@ udeo_suvo = (data["precipitation"] == 0).mean() * 100
 print(f"\nУдео незгода без падавина: {udeo_suvo:.1f}%")
 print(f"Број различитих WMO кодова времена: {data['weather_code'].nunique()}")
 
-# Метео услови наспрам тежине: групне статистике и образац кише (Марко)
+# Метео услови по тежини и утицај кише
 print("\nГрупне статистике метео обележја по тежини:")
 print(data.groupby("tezina")[meteo].mean().round(2))
 data["ima_kisu"] = (data["precipitation"] > 0).astype(int)
@@ -291,7 +301,7 @@ plt.savefig("Podaci/Grafici/EDA - težina po satu.png", dpi=120,
             bbox_inches="tight")
 plt.show()
 
-# Тежина по дану у недељи (наслагано, број незгода)
+# Тежина по дану у недељи
 tab_dani = pd.crosstab(data["dan_u_nedelji"], data["tezina"])
 tab_dani.index = dani_naz
 tab_dani_cir = tab_dani.rename(columns=cir)
