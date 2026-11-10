@@ -1,0 +1,9 @@
+matplotlib>=3.8
+networkx>=3.0
+numpy>=1.26
+pandas>=2.2
+scikit-fuzzy>=0.5
+scikit-learn>=1.4
+scipy>=1.11
+seaborn>=0.13
+tensorflow>=2.16
